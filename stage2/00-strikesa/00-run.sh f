@@ -1,0 +1,38 @@
+#!/bin/bash -e
+
+install -m 755 -d "${ROOTFS_DIR}/opt/strikesa"
+install -m 755 -d "${ROOTFS_DIR}/etc/strikesa"
+
+cat > "${ROOTFS_DIR}/opt/strikesa/README.txt" <<'EOF'
+StrikeSA image built by GitHub Actions.
+Repository: https://github.com/KenesisX/StrikeSA
+
+This image is intended to be flashed with Raspberry Pi Imager using
+"Use custom" and the generated StrikeSA.img.xz artifact.
+EOF
+
+cat > "${ROOTFS_DIR}/etc/systemd/system/strikesa-boot.service" <<'EOF'
+[Unit]
+Description=StrikeSA boot confirmation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "echo 'StrikeSA image booted successfully' > /var/log/strikesa-boot.log"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -sf "/etc/systemd/system/strikesa-boot.service" "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/strikesa-boot.service"
+
+cat > "${ROOTFS_DIR}/etc/hostname" <<'EOF'
+strikesa
+EOF
+
+cat > "${ROOTFS_DIR}/etc/motd" <<'EOF'
+Welcome to StrikeSA
+This Raspberry Pi image was built by GitHub Actions.
+EOF
