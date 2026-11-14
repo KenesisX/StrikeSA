@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Clone pi-gen
-        run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
+        run: git clone --branch bookworm
 
       - name: Add StrikeSA configuration
         shell: bash
