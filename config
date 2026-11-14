@@ -1,0 +1,7 @@
+IMG_NAME="StrikeSA"
+RELEASE="bookworm"
+TARGET_HOSTNAME="strikesa"
+FIRST_USER_NAME="pi"
+FIRST_USER_PASS="raspberry"
+ENABLE_SSH=1
+STAGE_LIST="stage0 stage1 stage2"
