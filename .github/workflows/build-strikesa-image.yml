@@ -1,0 +1,58 @@
+name: Build StrikeSA .img
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-strikesa-image.yml"
+      - "config"
+      - "stage2/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Clone pi-gen
+        run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
+
+      - name: Add StrikeSA configuration
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp config pi-gen/config
+          cp -a stage2/00-strikesa pi-gen/stage2/
+          chmod +x pi-gen/stage2/00-strikesa/00-run.sh
+
+      - name: Build image
+        working-directory: pi-gen
+        run: sudo ./build-docker.sh
+
+      - name: Compress image
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mapfile -t images < <(find pi-gen/deploy -maxdepth 1 -type f -name '*.img' -print)
+          if [ "${#images[@]}" -ne 1 ]; then
+            echo "Expected one .img file; found ${#images[@]}"
+            find pi-gen/deploy -maxdepth 1 -type f -print || true
+            exit 1
+          fi
+          xz -T0 -c "${images[0]}" > "$GITHUB_WORKSPACE/StrikeSA.img.xz"
+          ls -lh "$GITHUB_WORKSPACE/StrikeSA.img.xz"
+
+      - name: Upload StrikeSA image
+        uses: actions/upload-artifact@v4
+        with:
+          name: StrikeSA-image
+          path: StrikeSA.img.xz
+          if-no-files-found: error
+          retention-days: 30
